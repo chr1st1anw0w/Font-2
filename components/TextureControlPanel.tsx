@@ -65,7 +65,7 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
       </div>
 
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar texture-scrollbar">
 
         {/* 基本設定區 */}
         <div className="border border-gray-700 rounded-lg overflow-hidden">

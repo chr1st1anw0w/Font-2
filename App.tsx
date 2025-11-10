@@ -4,8 +4,10 @@ import BottomBar from './components/BottomBar';
 import Canvas from './components/Canvas';
 import AiSidebar from './components/AiSidebar';
 import TextureControlPanel from './components/TextureControlPanel';
+import TextureToolbar from './components/TextureToolbar';
 import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType, TextureParameters, TextureGenerationResult } from './types';
 import { generateTexture, defaultTextureParameters } from './services/textureGeneratorService';
+import { exportTexture } from './services/textureExportService';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>('selection');
@@ -133,15 +135,18 @@ const App: React.FC = () => {
     }
   }, [textureParameters]);
 
-  const handleExportTexture = useCallback(() => {
-    if (!textureResult) return;
+  const handleExportTexture = useCallback(async (format: 'svg' | 'png' | 'css' = 'svg') => {
+    if (!textureResult) {
+      alert('請先生成紋理');
+      return;
+    }
 
-    const link = document.createElement('a');
-    link.href = 'data:image/svg+xml;base64,' + btoa(textureResult.svgData);
-    link.download = `texture-${textureResult.id}.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      await exportTexture(textureResult, format);
+    } catch (error) {
+      console.error('匯出失敗:', error);
+      alert('紋理匯出失敗，請重試');
+    }
   }, [textureResult]);
 
   const toggleTexturePanel = useCallback(() => {
@@ -215,6 +220,14 @@ const App: React.FC = () => {
         selectedNodeId={selectedNodeId}
         updateSelectedNode={updateSelectedNode}
         convertNodesToPath={convertNodesToPath}
+      />
+
+      {/* Texture Toolbar */}
+      <TextureToolbar
+        textureResult={textureResult}
+        isVisible={textureMode}
+        onExport={handleExportTexture}
+        isExporting={isGeneratingTexture}
       />
     </div>
   );
