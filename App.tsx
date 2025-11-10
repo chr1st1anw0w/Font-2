@@ -5,6 +5,7 @@ import Canvas from './components/Canvas';
 import AiSidebar from './components/AiSidebar';
 import TextureControlPanel from './components/TextureControlPanel';
 import TextureToolbar from './components/TextureToolbar';
+import NavigationBar from './components/NavigationBar';
 import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType, TextureParameters, TextureGenerationResult } from './types';
 import { generateTexture, defaultTextureParameters } from './services/textureGeneratorService';
 import { exportTexture } from './services/textureExportService';
@@ -153,6 +154,20 @@ const App: React.FC = () => {
     setShowTexturePanel(prev => !prev);
   }, []);
 
+  // 縮放相關回調
+  const handleZoomChange = useCallback((zoom: number) => {
+    setZoomLevel(zoom);
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomLevel(100);
+  }, []);
+
+  const handleFitToScreen = useCallback(() => {
+    // 計算適應屏幕的縮放比例（這裡簡化為 75%）
+    setZoomLevel(75);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen w-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Hidden File Input */}
@@ -228,6 +243,16 @@ const App: React.FC = () => {
         isVisible={textureMode}
         onExport={handleExportTexture}
         isExporting={isGeneratingTexture}
+      />
+
+      {/* Navigation Bar */}
+      <NavigationBar
+        canvasWidth={800}
+        canvasHeight={800}
+        zoomLevel={zoomLevel}
+        onZoomChange={handleZoomChange}
+        onResetZoom={handleResetZoom}
+        onFitToScreen={handleFitToScreen}
       />
     </div>
   );
