@@ -121,4 +121,102 @@ export const vectorizeImage = async (imageBase64: string): Promise<VectorShape[]
         if (!text) throw new Error("No response from AI");
 
         const json = JSON.parse(text);
-        if (!json.paths || !Array
+        if (!json.paths || !Array.isArray(json.paths)) {
+            throw new Error("Invalid response format");
+        }
+
+        return json.paths.map((pathData: string, index: number) => ({
+            id: `vectorized-path-${index}`,
+            type: 'path' as const,
+            x: 0,
+            y: 0,
+            width: 100,
+            height: 100,
+            strokeColor: '#5847eb',
+            strokeWidth: 2,
+            fillColor: 'none',
+            pathData: pathData
+        }));
+    } catch (error) {
+        console.error("Vectorization Error:", error);
+        throw error;
+    }
+};
+
+// AI 輔助紋理生成提示生成
+export interface TexturePromptSuggestion {
+    shape: string;
+    arrangement: string;
+    algorithm: string;
+    colorScheme: string;
+    prompt: string;
+}
+
+export const generateTexturePrompt = async (description: string): Promise<TexturePromptSuggestion> => {
+    const ai = createClient();
+
+    const systemPrompt = `You are an expert in geometric texture design and parametric patterns.
+    Based on user descriptions, suggest optimal texture parameters and generate a detailed prompt.
+    Return a JSON object with: shape, arrangement, algorithm, colorScheme, and a detailed prompt.`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: {
+                parts: [
+                    {
+                        text: `${systemPrompt}
+
+User request: "${description}"
+
+Respond with JSON containing: shape, arrangement, algorithm, colorScheme, prompt`
+                    }
+                ]
+            },
+            config: {
+                responseMimeType: 'application/json'
+            }
+        });
+
+        const text = response.text;
+        if (!text) throw new Error("No response from AI");
+
+        const suggestion = JSON.parse(text);
+        return {
+            shape: suggestion.shape || 'circle',
+            arrangement: suggestion.arrangement || 'grid',
+            algorithm: suggestion.algorithm || 'perlin',
+            colorScheme: suggestion.colorScheme || 'gradient',
+            prompt: suggestion.prompt || description
+        };
+    } catch (error) {
+        console.error("Texture Prompt Generation Error:", error);
+        throw error;
+    }
+};
+
+// AI 聊天支持 (適用於紋理設計建議)
+export const chatWithAi = async (
+    history: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }>,
+    userMessage: string
+): Promise<string> => {
+    const ai = createClient();
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+                ...history,
+                {
+                    role: 'user',
+                    parts: [{ text: userMessage }]
+                }
+            ]
+        });
+
+        return response.text || "Unable to generate response";
+    } catch (error) {
+        console.error("Chat Error:", error);
+        throw error;
+    }
+};
