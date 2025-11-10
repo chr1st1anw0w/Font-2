@@ -15,7 +15,7 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
   isGenerating = false,
 }) => {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
-    new Set(['basic', 'visual'])
+    new Set(['basic'])
   );
 
   const toggleSection = useCallback((section: string) => {
@@ -67,77 +67,70 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
       {/* Content Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar texture-scrollbar">
 
-        {/* 基本設定區 */}
-        <div className="border border-gray-700 rounded-lg overflow-hidden">
-          <button
-            onClick={() => toggleSection('basic')}
-            className="w-full px-4 py-3 flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition-colors"
-          >
-            <span className="font-semibold text-sm">基本設定</span>
-            <svg className={`w-4 h-4 transition-transform ${expandedSections.has('basic') ? 'rotate-180' : ''}`}
-              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-            </svg>
-          </button>
-          {expandedSections.has('basic') && (
-            <div className="p-4 bg-gray-850 space-y-4 border-t border-gray-700">
+        {/* === 級別 1：快速訪問（始終展開）=== */}
+        <div className="bg-gradient-to-r from-purple-900/20 to-transparent border border-purple-700/30 rounded-lg p-4 space-y-4">
+          <h3 className="text-xs font-bold text-purple-300 uppercase tracking-wide">⚡ 快速調整</h3>
 
-              {/* 形狀類型 */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">形狀類型</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {shapeTypes.map(shape => (
-                    <button
-                      key={shape}
-                      onClick={() => updateParam('shapeType', shape)}
-                      className={`text-xs py-2 rounded border transition-colors capitalize ${
-                        parameters.shapeType === shape
-                          ? 'bg-purple-600/30 border-purple-500 text-purple-200'
-                          : 'bg-gray-950 border-gray-700 text-gray-400 hover:border-gray-500'
-                      }`}
-                    >
-                      {shape}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 數量 */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  數量: {parameters.quantity}
-                </label>
-                <input
-                  type="range"
-                  min="1"
-                  max="100"
-                  value={parameters.quantity}
-                  onChange={(e) => updateParam('quantity', parseInt(e.target.value))}
-                  className="w-full"
-                />
-              </div>
-
-              {/* 排列方式 */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">排列方式</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {arrangementTypes.map(type => (
-                    <button
-                      key={type}
-                      onClick={() => updateParam('arrangement', type)}
-                      className={`text-xs py-2 rounded border transition-colors capitalize ${
-                        parameters.arrangement === type
-                          ? 'bg-purple-600/30 border-purple-500 text-purple-200'
-                          : 'bg-gray-950 border-gray-700 text-gray-400 hover:border-gray-500'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
+          {/* 形狀類型 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">形狀</label>
+            <div className="grid grid-cols-5 gap-1.5">
+              {shapeTypes.slice(0, 5).map(shape => (
+                <button
+                  key={shape}
+                  onClick={() => updateParam('shapeType', shape)}
+                  className={`text-xs py-1.5 rounded border transition-colors capitalize ${
+                    parameters.shapeType === shape
+                      ? 'bg-purple-600/40 border-purple-500 text-purple-200 font-semibold'
+                      : 'bg-gray-950 border-gray-700 text-gray-400 hover:border-gray-500 hover:bg-gray-850'
+                  }`}
+                  title={shape}
+                >
+                  {shape.substring(0, 3)}
+                </button>
+              ))}
             </div>
-          )}
+          </div>
+
+          {/* 數量 */}
+          <div>
+            <div className="flex justify-between items-center">
+              <label className="text-xs font-semibold text-gray-400 uppercase">數量</label>
+              <span className="text-sm font-bold text-purple-300">{parameters.quantity}</span>
+            </div>
+            <input
+              type="range"
+              min="1"
+              max="100"
+              value={parameters.quantity}
+              onChange={(e) => updateParam('quantity', parseInt(e.target.value))}
+              className="w-full"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>1</span>
+              <span>100</span>
+            </div>
+          </div>
+
+          {/* 排列方式 */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">排列</label>
+            <div className="grid grid-cols-3 gap-2">
+              {arrangementTypes.map(type => (
+                <button
+                  key={type}
+                  onClick={() => updateParam('arrangement', type)}
+                  className={`text-xs py-1.5 rounded border transition-colors capitalize ${
+                    parameters.arrangement === type
+                      ? 'bg-purple-600/40 border-purple-500 text-purple-200 font-semibold'
+                      : 'bg-gray-950 border-gray-700 text-gray-400 hover:border-gray-500 hover:bg-gray-850'
+                  }`}
+                >
+                  {type.substring(0, 4)}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* 旋轉與尺度區 */}
@@ -155,31 +148,12 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
           {expandedSections.has('transform') && (
             <div className="p-4 bg-gray-850 space-y-4 border-t border-gray-700">
 
-              {/* 旋轉類型 */}
-              <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">旋轉類型</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {rotationTypes.map(type => (
-                    <button
-                      key={type}
-                      onClick={() => updateParam('rotationType', type)}
-                      className={`text-xs py-2 rounded border transition-colors capitalize ${
-                        parameters.rotationType === type
-                          ? 'bg-purple-600/30 border-purple-500 text-purple-200'
-                          : 'bg-gray-950 border-gray-700 text-gray-400 hover:border-gray-500'
-                      }`}
-                    >
-                      {type}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
               {/* 旋轉角度 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  旋轉角度: {parameters.rotation}°
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">旋轉角度</label>
+                  <span className="text-sm font-bold text-purple-300">{parameters.rotation}°</span>
+                </div>
                 <input
                   type="range"
                   min="0"
@@ -190,28 +164,12 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
                 />
               </div>
 
-              {/* 旋轉遞增量 */}
-              {parameters.rotationType === 'incremental' && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                    遞增角度: {parameters.rotationIncrement || 0}°
-                  </label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="360"
-                    value={parameters.rotationIncrement || 0}
-                    onChange={(e) => updateParam('rotationIncrement', parseInt(e.target.value))}
-                    className="w-full"
-                  />
-                </div>
-              )}
-
               {/* 尺度 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  尺度: {parameters.scale.toFixed(2)}x
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">尺度</label>
+                  <span className="text-sm font-bold text-purple-300">{parameters.scale.toFixed(2)}x</span>
+                </div>
                 <input
                   type="range"
                   min="0.1"
@@ -243,9 +201,10 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
 
               {/* 筆畫寬度 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  筆畫寬度: {parameters.strokeWidth}px
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">筆畫寬度</label>
+                  <span className="text-sm font-bold text-purple-300">{parameters.strokeWidth}px</span>
+                </div>
                 <input
                   type="range"
                   min="1"
@@ -258,9 +217,10 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
 
               {/* 密度 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  密度: {parameters.density}%
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">密度</label>
+                  <span className="text-sm font-bold text-purple-300">{parameters.density}%</span>
+                </div>
                 <input
                   type="range"
                   min="0"
@@ -273,9 +233,10 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
 
               {/* 透明度 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  透明度: {parameters.opacity}%
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">透明度</label>
+                  <span className="text-sm font-bold text-purple-300">{parameters.opacity}%</span>
+                </div>
                 <input
                   type="range"
                   min="0"
@@ -295,7 +256,19 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
             onClick={() => toggleSection('color')}
             className="w-full px-4 py-3 flex items-center justify-between bg-gray-800 hover:bg-gray-700 transition-colors"
           >
-            <span className="font-semibold text-sm">色彩設定</span>
+            <span className="font-semibold text-sm flex items-center gap-2">
+              🎨 色彩設定
+              <div className="flex gap-1 ml-2">
+                <div
+                  className="w-4 h-4 rounded border border-gray-600"
+                  style={{ backgroundColor: parameters.primaryColor }}
+                />
+                <div
+                  className="w-4 h-4 rounded border border-gray-600"
+                  style={{ backgroundColor: parameters.secondaryColor }}
+                />
+              </div>
+            </span>
             <svg className={`w-4 h-4 transition-transform ${expandedSections.has('color') ? 'rotate-180' : ''}`}
               xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
@@ -308,7 +281,7 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
               <div>
                 <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">色彩模式</label>
                 <div className="grid grid-cols-2 gap-2">
-                  {colorModes.map(mode => (
+                  {(['single', 'gradient', 'palette', 'random'] as ColorMode[]).map(mode => (
                     <button
                       key={mode}
                       onClick={() => updateParam('colorMode', mode)}
@@ -344,25 +317,23 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
               </div>
 
               {/* 次要色彩 */}
-              {(parameters.colorMode === 'gradient' || parameters.colorMode === 'palette') && (
-                <div>
-                  <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">次要色彩</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="color"
-                      value={parameters.secondaryColor || '#FFFFFF'}
-                      onChange={(e) => updateParam('secondaryColor', e.target.value)}
-                      className="w-12 h-10 rounded cursor-pointer border border-gray-700"
-                    />
-                    <input
-                      type="text"
-                      value={parameters.secondaryColor || '#FFFFFF'}
-                      onChange={(e) => updateParam('secondaryColor', e.target.value)}
-                      className="flex-1 bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 uppercase font-mono"
-                    />
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">次要色彩</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={parameters.secondaryColor || '#FFFFFF'}
+                    onChange={(e) => updateParam('secondaryColor', e.target.value)}
+                    className="w-12 h-10 rounded cursor-pointer border border-gray-700"
+                  />
+                  <input
+                    type="text"
+                    value={parameters.secondaryColor || '#FFFFFF'}
+                    onChange={(e) => updateParam('secondaryColor', e.target.value)}
+                    className="flex-1 bg-gray-950 border border-gray-700 rounded px-2 py-1 text-xs text-gray-200 uppercase font-mono"
+                  />
                 </div>
-              )}
+              </div>
 
               {/* 背景色 */}
               <div>
@@ -423,9 +394,10 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
 
               {/* 頻率 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  頻率: {parameters.algorithmParams.frequency || 0.5}
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">頻率</label>
+                  <span className="text-sm font-bold text-purple-300">{(parameters.algorithmParams.frequency || 0.5).toFixed(2)}</span>
+                </div>
                 <input
                   type="range"
                   min="0.1"
@@ -439,9 +411,10 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
 
               {/* 振幅 */}
               <div>
-                <label className="block text-xs font-semibold text-gray-400 uppercase mb-2">
-                  振幅: {parameters.algorithmParams.amplitude || 0.3}
-                </label>
+                <div className="flex justify-between">
+                  <label className="text-xs font-semibold text-gray-400 uppercase">振幅</label>
+                  <span className="text-sm font-bold text-purple-300">{(parameters.algorithmParams.amplitude || 0.3).toFixed(2)}</span>
+                </div>
                 <input
                   type="range"
                   min="0"
@@ -472,7 +445,7 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
               </svg>
               生成中...
             </>
-          ) : '生成紋理'}
+          ) : '✨ 生成紋理'}
         </button>
       </div>
     </div>
