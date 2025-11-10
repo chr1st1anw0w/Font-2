@@ -1,5 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { TextureParameters, GeometricShape, ArrangementType, RotationType, ColorMode, AlgorithmType } from '../types';
+import ColorControlPanel from './ColorControlPanel';
+import QuantityControlPanel from './QuantityControlPanel';
 
 interface TextureControlPanelProps {
   parameters: TextureParameters;
@@ -17,6 +19,8 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['basic'])
   );
+  const [showColorPanel, setShowColorPanel] = useState(false);
+  const [showQuantityPanel, setShowQuantityPanel] = useState(false);
 
   const toggleSection = useCallback((section: string) => {
     const newExpanded = new Set(expandedSections);
@@ -130,6 +134,22 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* 快速面板按鈕 */}
+          <div className="grid grid-cols-2 gap-2 pt-2 border-t border-purple-600/30">
+            <button
+              onClick={() => setShowColorPanel(true)}
+              className="py-2 px-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded text-xs font-semibold transition-all flex items-center justify-center gap-2"
+            >
+              🎨 色彩
+            </button>
+            <button
+              onClick={() => setShowQuantityPanel(true)}
+              className="py-2 px-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white rounded text-xs font-semibold transition-all flex items-center justify-center gap-2"
+            >
+              🔢 數量
+            </button>
           </div>
         </div>
 
@@ -448,6 +468,28 @@ const TextureControlPanel: React.FC<TextureControlPanelProps> = ({
           ) : '✨ 生成紋理'}
         </button>
       </div>
+
+      {/* 色彩控制面板 */}
+      <ColorControlPanel
+        primaryColor={parameters.primaryColor}
+        secondaryColor={parameters.secondaryColor || '#FFFFFF'}
+        backgroundColor={parameters.backgroundColor}
+        onPrimaryColorChange={(color) => updateParam('primaryColor', color)}
+        onSecondaryColorChange={(color) => updateParam('secondaryColor', color)}
+        onBackgroundColorChange={(color) => updateParam('backgroundColor', color)}
+        isOpen={showColorPanel}
+        onClose={() => setShowColorPanel(false)}
+      />
+
+      {/* 數量控制面板 */}
+      <QuantityControlPanel
+        quantity={parameters.quantity}
+        arrangement={parameters.arrangement}
+        onQuantityChange={(qty) => updateParam('quantity', qty)}
+        onArrangementChange={(arr) => updateParam('arrangement', arr as ArrangementType)}
+        isOpen={showQuantityPanel}
+        onClose={() => setShowQuantityPanel(false)}
+      />
     </div>
   );
 };
