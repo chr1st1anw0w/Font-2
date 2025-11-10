@@ -3,7 +3,9 @@ import TopBar from './components/TopBar';
 import BottomBar from './components/BottomBar';
 import Canvas from './components/Canvas';
 import AiSidebar from './components/AiSidebar';
-import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType } from './types';
+import TextureControlPanel from './components/TextureControlPanel';
+import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType, TextureParameters, TextureGenerationResult } from './types';
+import { generateTexture, defaultTextureParameters } from './services/textureGeneratorService';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>('selection');
@@ -23,6 +25,13 @@ const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [shapes, setShapes] = useState<VectorShape[]>([]);
   const [activeShapeType, setActiveShapeType] = useState<ShapeType>('rect');
+
+  // 紋理相關狀態
+  const [textureMode, setTextureMode] = useState(false);
+  const [textureParameters, setTextureParameters] = useState<TextureParameters>(defaultTextureParameters);
+  const [textureResult, setTextureResult] = useState<TextureGenerationResult | null>(null);
+  const [isGeneratingTexture, setIsGeneratingTexture] = useState(false);
+  const [showTexturePanel, setShowTexturePanel] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,6 +114,40 @@ const App: React.FC = () => {
       setActiveTool('selection'); // Switch back to selection after completing path
   }, [nodes, glyphProperties]);
 
+  // 紋理生成方法
+  const handleGenerateTexture = useCallback(async () => {
+    setIsGeneratingTexture(true);
+    try {
+      const result = generateTexture(textureParameters);
+      setTextureResult(result);
+      setTextureMode(true);
+      // 轉換 SVG 為 data URL 以便顯示
+      const svgBlob = new Blob([result.svgData], { type: 'image/svg+xml' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      setActiveImage(svgUrl);
+    } catch (error) {
+      console.error('紋理生成失敗:', error);
+      alert('紋理生成失敗，請檢查參數設置');
+    } finally {
+      setIsGeneratingTexture(false);
+    }
+  }, [textureParameters]);
+
+  const handleExportTexture = useCallback(() => {
+    if (!textureResult) return;
+
+    const link = document.createElement('a');
+    link.href = 'data:image/svg+xml;base64,' + btoa(textureResult.svgData);
+    link.download = `texture-${textureResult.id}.svg`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [textureResult]);
+
+  const toggleTexturePanel = useCallback(() => {
+    setShowTexturePanel(prev => !prev);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen w-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Hidden File Input */}
@@ -123,6 +166,8 @@ const App: React.FC = () => {
         onExport={handleDownload}
         showGrid={showGrid}
         setShowGrid={setShowGrid}
+        toggleTexturePanel={toggleTexturePanel}
+        showTexturePanel={showTexturePanel}
       />
 
       <div className="flex-1 flex relative overflow-hidden">
@@ -147,6 +192,14 @@ const App: React.FC = () => {
             onImageGenerated={handleImageGenerated}
             currentCanvasImage={activeImage}
         />
+        {showTexturePanel && (
+          <TextureControlPanel
+            parameters={textureParameters}
+            onParametersChange={setTextureParameters}
+            onGenerate={handleGenerateTexture}
+            isGenerating={isGeneratingTexture}
+          />
+        )}
       </div>
 
       <BottomBar

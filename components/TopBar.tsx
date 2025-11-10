@@ -7,9 +7,11 @@ interface TopBarProps {
   onExport: () => void;
   showGrid: boolean;
   setShowGrid: (show: boolean) => void;
+  toggleTexturePanel?: () => void;
+  showTexturePanel?: boolean;
 }
 
-const TopBar: React.FC<TopBarProps> = ({ toggleAiSidebar, isAiSidebarOpen, onImport, onExport, showGrid, setShowGrid }) => {
+const TopBar: React.FC<TopBarProps> = ({ toggleAiSidebar, isAiSidebarOpen, onImport, onExport, showGrid, setShowGrid, toggleTexturePanel, showTexturePanel = false }) => {
   const menuItems = ['File', 'Edit', 'View'];
   const actionIconClass = "p-2 text-gray-400 hover:text-white hover:bg-gray-700 rounded transition-colors cursor-pointer";
 
@@ -54,6 +56,21 @@ const TopBar: React.FC<TopBarProps> = ({ toggleAiSidebar, isAiSidebarOpen, onImp
            <button className={actionIconClass} title="Export" onClick={onExport}>
              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           </button>
+
+          <div className="w-2"></div>
+
+          {/* Texture Tool */}
+          {toggleTexturePanel && (
+            <button
+              className={`${actionIconClass} ${showTexturePanel ? 'text-purple-400 bg-purple-500/10' : ''}`}
+              title="Texture Generator"
+              onClick={toggleTexturePanel}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="8" cy="8" r="2"/><circle cx="16" cy="8" r="2"/><circle cx="12" cy="16" r="2"/><circle cx="8" cy="16" r="2"/><circle cx="16" cy="16" r="2"/>
+              </svg>
+            </button>
+          )}
         </div>
       </div>
 
