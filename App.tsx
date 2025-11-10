@@ -3,7 +3,12 @@ import TopBar from './components/TopBar';
 import BottomBar from './components/BottomBar';
 import Canvas from './components/Canvas';
 import AiSidebar from './components/AiSidebar';
-import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType } from './types';
+import TextureControlPanel from './components/TextureControlPanel';
+import TextureToolbar from './components/TextureToolbar';
+import NavigationBar from './components/NavigationBar';
+import { ToolType, GlyphProperties, VectorNode, VectorShape, ShapeType, TextureParameters, TextureGenerationResult } from './types';
+import { generateTexture, defaultTextureParameters } from './services/textureGeneratorService';
+import { exportTexture } from './services/textureExportService';
 
 const App: React.FC = () => {
   const [activeTool, setActiveTool] = useState<ToolType>('selection');
@@ -23,6 +28,13 @@ const App: React.FC = () => {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [shapes, setShapes] = useState<VectorShape[]>([]);
   const [activeShapeType, setActiveShapeType] = useState<ShapeType>('rect');
+
+  // 紋理相關狀態
+  const [textureMode, setTextureMode] = useState(false);
+  const [textureParameters, setTextureParameters] = useState<TextureParameters>(defaultTextureParameters);
+  const [textureResult, setTextureResult] = useState<TextureGenerationResult | null>(null);
+  const [isGeneratingTexture, setIsGeneratingTexture] = useState(false);
+  const [showTexturePanel, setShowTexturePanel] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -105,6 +117,57 @@ const App: React.FC = () => {
       setActiveTool('selection'); // Switch back to selection after completing path
   }, [nodes, glyphProperties]);
 
+  // 紋理生成方法
+  const handleGenerateTexture = useCallback(async () => {
+    setIsGeneratingTexture(true);
+    try {
+      const result = generateTexture(textureParameters);
+      setTextureResult(result);
+      setTextureMode(true);
+      // 轉換 SVG 為 data URL 以便顯示
+      const svgBlob = new Blob([result.svgData], { type: 'image/svg+xml' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      setActiveImage(svgUrl);
+    } catch (error) {
+      console.error('紋理生成失敗:', error);
+      alert('紋理生成失敗，請檢查參數設置');
+    } finally {
+      setIsGeneratingTexture(false);
+    }
+  }, [textureParameters]);
+
+  const handleExportTexture = useCallback(async (format: 'svg' | 'png' | 'css' = 'svg') => {
+    if (!textureResult) {
+      alert('請先生成紋理');
+      return;
+    }
+
+    try {
+      await exportTexture(textureResult, format);
+    } catch (error) {
+      console.error('匯出失敗:', error);
+      alert('紋理匯出失敗，請重試');
+    }
+  }, [textureResult]);
+
+  const toggleTexturePanel = useCallback(() => {
+    setShowTexturePanel(prev => !prev);
+  }, []);
+
+  // 縮放相關回調
+  const handleZoomChange = useCallback((zoom: number) => {
+    setZoomLevel(zoom);
+  }, []);
+
+  const handleResetZoom = useCallback(() => {
+    setZoomLevel(100);
+  }, []);
+
+  const handleFitToScreen = useCallback(() => {
+    // 計算適應屏幕的縮放比例（這裡簡化為 75%）
+    setZoomLevel(75);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen w-screen bg-gray-950 text-gray-100 overflow-hidden">
       {/* Hidden File Input */}
@@ -123,6 +186,8 @@ const App: React.FC = () => {
         onExport={handleDownload}
         showGrid={showGrid}
         setShowGrid={setShowGrid}
+        toggleTexturePanel={toggleTexturePanel}
+        showTexturePanel={showTexturePanel}
       />
 
       <div className="flex-1 flex relative overflow-hidden">
@@ -147,6 +212,14 @@ const App: React.FC = () => {
             onImageGenerated={handleImageGenerated}
             currentCanvasImage={activeImage}
         />
+        {showTexturePanel && (
+          <TextureControlPanel
+            parameters={textureParameters}
+            onParametersChange={setTextureParameters}
+            onGenerate={handleGenerateTexture}
+            isGenerating={isGeneratingTexture}
+          />
+        )}
       </div>
 
       <BottomBar
@@ -162,6 +235,24 @@ const App: React.FC = () => {
         selectedNodeId={selectedNodeId}
         updateSelectedNode={updateSelectedNode}
         convertNodesToPath={convertNodesToPath}
+      />
+
+      {/* Texture Toolbar */}
+      <TextureToolbar
+        textureResult={textureResult}
+        isVisible={textureMode}
+        onExport={handleExportTexture}
+        isExporting={isGeneratingTexture}
+      />
+
+      {/* Navigation Bar */}
+      <NavigationBar
+        canvasWidth={800}
+        canvasHeight={800}
+        zoomLevel={zoomLevel}
+        onZoomChange={handleZoomChange}
+        onResetZoom={handleResetZoom}
+        onFitToScreen={handleFitToScreen}
       />
     </div>
   );

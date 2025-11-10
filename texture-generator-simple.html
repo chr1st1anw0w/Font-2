@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>動態紋理生成工具 - 簡易版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #e2e8f0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* 控制面板 */
+        .control-panel {
+            width: 320px;
+            background: #1a202c;
+            border-right: 1px solid #374151;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .control-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #9ca3af;
+        }
+
+        .control-value {
+            font-size: 14px;
+            color: #7c3aed;
+            font-weight: 500;
+        }
+
+        /* 滑桿樣式 */
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #374151;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #7c3aed;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #9333ea;
+            transform: scale(1.2);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #7c3aed;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        input[type="range"]::-moz-range-thumb:hover {
+            background: #9333ea;
+            transform: scale(1.2);
+        }
+
+        /* 選擇按鈕組 */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .button-group.three {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: 1px solid #374151;
+            background: #2d3748;
+            color: #d1d5db;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            background: #374151;
+            border-color: #4b5563;
+        }
+
+        button.active {
+            background: #7c3aed;
+            border-color: #7c3aed;
+            color: #fff;
+        }
+
+        /* 色彩選擇器 */
+        .color-input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="color"] {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #374151;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 6px;
+            background: #2d3748;
+            border: 1px solid #374151;
+            color: #e2e8f0;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+
+        /* 畫布區域 */
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #0d1117;
+            position: relative;
+        }
+
+        .canvas-header {
+            height: 50px;
+            background: #1a202c;
+            border-bottom: 1px solid #374151;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+        }
+
+        .canvas-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .canvas-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .zoom-info {
+            font-size: 12px;
+            color: #9ca3af;
+            min-width: 60px;
+            text-align: right;
+        }
+
+        canvas {
+            flex: 1;
+            display: block;
+            background: #0d1117;
+            cursor: crosshair;
+        }
+
+        /* 按鈕區 */
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .btn-primary {
+            flex: 1;
+            padding: 10px 16px;
+            background: #7c3aed;
+            border: none;
+            color: #fff;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background: #9333ea;
+        }
+
+        .btn-secondary {
+            flex: 1;
+            padding: 10px 16px;
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: #d1d5db;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        /* 滾動條 */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .control-panel::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 3px;
+        }
+
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: #666d7a;
+        }
+
+        /* 響應式 */
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .control-panel {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #374151;
+                max-height: 30%;
+                padding: 15px;
+            }
+
+            .canvas-container {
+                height: auto;
+                flex: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 控制面板 -->
+        <div class="control-panel">
+            <div class="panel-title">🎨 紋理參數</div>
+
+            <!-- 形狀選擇 -->
+            <div class="control-group">
+                <label class="control-label">形狀</label>
+                <div class="button-group three">
+                    <button class="active" onclick="setShape('circle')">圓</button>
+                    <button onclick="setShape('square')">方</button>
+                    <button onclick="setShape('triangle')">三角</button>
+                </div>
+            </div>
+
+            <!-- 數量控制 -->
+            <div class="control-group">
+                <div style="display: flex; justify-content: space-between;">
+                    <label class="control-label">數量</label>
+                    <span class="control-value" id="quantityValue">12</span>
+                </div>
+                <input type="range" min="4" max="100" value="12" id="quantity" onchange="updateTexture()">
+            </div>
+
+            <!-- 主色彩 -->
+            <div class="control-group">
+                <label class="control-label">主色彩</label>
+                <div class="color-input-group">
+                    <input type="color" id="primaryColor" value="#7c3aed" onchange="updateTexture()">
+                    <input type="text" id="primaryColorText" value="#7C3AED" readonly style="cursor: default;">
+                </div>
+            </div>
+
+            <!-- 副色彩 -->
+            <div class="control-group">
+                <label class="control-label">副色彩</label>
+                <div class="color-input-group">
+                    <input type="color" id="secondaryColor" value="#ff6b6b" onchange="updateTexture()">
+                    <input type="text" id="secondaryColorText" value="#FF6B6B" readonly style="cursor: default;">
+                </div>
+            </div>
+
+            <!-- 旋轉 -->
+            <div class="control-group">
+                <div style="display: flex; justify-content: space-between;">
+                    <label class="control-label">旋轉</label>
+                    <span class="control-value" id="rotationValue">0°</span>
+                </div>
+                <input type="range" min="0" max="360" value="0" id="rotation" onchange="updateTexture()">
+            </div>
+
+            <!-- 透明度 -->
+            <div class="control-group">
+                <div style="display: flex; justify-content: space-between;">
+                    <label class="control-label">透明度</label>
+                    <span class="control-value" id="opacityValue">100%</span>
+                </div>
+                <input type="range" min="0" max="100" value="100" id="opacity" onchange="updateTexture()">
+            </div>
+
+            <!-- 隨機色彩 -->
+            <div class="control-group">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" id="randomColor" onchange="updateTexture()" style="cursor: pointer;">
+                    <span class="control-label" style="margin: 0;">隨機色彩變化</span>
+                </label>
+            </div>
+
+            <!-- 按鈕 -->
+            <div class="button-row">
+                <button class="btn-secondary" onclick="resetTexture()">重置</button>
+                <button class="btn-primary" onclick="exportSVG()">📥 匯出</button>
+            </div>
+        </div>
+
+        <!-- 畫布區域 -->
+        <div class="canvas-container">
+            <div class="canvas-header">
+                <span class="canvas-title">紋理預覽</span>
+                <div class="canvas-controls">
+                    <span class="zoom-info" id="zoomInfo">100%</span>
+                </div>
+            </div>
+            <canvas id="canvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // 全局狀態
+        let state = {
+            shape: 'circle',
+            quantity: 12,
+            primaryColor: '#7c3aed',
+            secondaryColor: '#ff6b6b',
+            rotation: 0,
+            opacity: 1,
+            randomColor: false,
+            zoom: 1
+        };
+
+        // 初始化畫布
+        function resizeCanvas() {
+            const rect = canvas.parentElement.getBoundingClientRect();
+            canvas.width = rect.width;
+            canvas.height = rect.height;
+            updateTexture();
+        }
+
+        // 設定形狀
+        function setShape(shape) {
+            state.shape = shape;
+            document.querySelectorAll('.button-group.three button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            updateTexture();
+        }
+
+        // 更新紋理
+        function updateTexture() {
+            // 更新UI顯示值
+            document.getElementById('quantityValue').textContent = state.quantity;
+            document.getElementById('rotationValue').textContent = state.rotation + '°';
+            document.getElementById('opacityValue').textContent = state.opacity + '%';
+
+            state.quantity = parseInt(document.getElementById('quantity').value);
+            state.rotation = parseInt(document.getElementById('rotation').value);
+            state.opacity = parseInt(document.getElementById('opacity').value) / 100;
+            state.randomColor = document.getElementById('randomColor').checked;
+            state.primaryColor = document.getElementById('primaryColor').value;
+            state.secondaryColor = document.getElementById('secondaryColor').value;
+
+            // 更新色彩文本
+            document.getElementById('primaryColorText').value = state.primaryColor.toUpperCase();
+            document.getElementById('secondaryColorText').value = state.secondaryColor.toUpperCase();
+
+            renderTexture();
+        }
+
+        // 渲染紋理
+        function renderTexture() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0d1117';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const cols = Math.ceil(Math.sqrt(state.quantity));
+            const rows = Math.ceil(state.quantity / cols);
+            const cellWidth = canvas.width / cols;
+            const cellHeight = canvas.height / rows;
+            const size = Math.min(cellWidth, cellHeight) * 0.35;
+
+            // 隨機種子（用於色彩）
+            const seededRandom = (seed) => {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            };
+
+            for (let i = 0; i < state.quantity; i++) {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = col * cellWidth + cellWidth / 2;
+                const y = row * cellHeight + cellHeight / 2;
+
+                // 計算顏色
+                let fillColor = state.primaryColor;
+                if (state.randomColor) {
+                    const t = seededRandom(i);
+                    fillColor = interpolateColor(state.primaryColor, state.secondaryColor, t);
+                } else {
+                    const t = i / Math.max(state.quantity - 1, 1);
+                    fillColor = interpolateColor(state.primaryColor, state.secondaryColor, t);
+                }
+
+                // 計算旋轉
+                const angle = (state.rotation + (i * 360 / Math.max(state.quantity, 1))) * Math.PI / 180;
+
+                // 繪製形狀
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(angle);
+                ctx.fillStyle = fillColor;
+                ctx.globalAlpha = state.opacity;
+
+                switch (state.shape) {
+                    case 'circle':
+                        ctx.beginPath();
+                        ctx.arc(0, 0, size, 0, Math.PI * 2);
+                        ctx.fill();
+                        break;
+                    case 'square':
+                        ctx.fillRect(-size, -size, size * 2, size * 2);
+                        break;
+                    case 'triangle':
+                        ctx.beginPath();
+                        ctx.moveTo(0, -size);
+                        ctx.lineTo(size, size);
+                        ctx.lineTo(-size, size);
+                        ctx.closePath();
+                        ctx.fill();
+                        break;
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // 顏色插值
+        function interpolateColor(color1, color2, t) {
+            const c1 = hexToRgb(color1);
+            const c2 = hexToRgb(color2);
+
+            const r = Math.round(c1.r + (c2.r - c1.r) * t);
+            const g = Math.round(c1.g + (c2.g - c1.g) * t);
+            const b = Math.round(c1.b + (c2.b - c1.b) * t);
+
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        // Hex 轉 RGB
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : { r: 0, g: 0, b: 0 };
+        }
+
+        // 匯出 SVG
+        function exportSVG() {
+            const cols = Math.ceil(Math.sqrt(state.quantity));
+            const rows = Math.ceil(state.quantity / cols);
+            const cellWidth = 800 / cols;
+            const cellHeight = 800 / rows;
+            const size = Math.min(cellWidth, cellHeight) * 0.35;
+
+            let svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="800" fill="#0d1117"/>
+  <g id="texture">`;
+
+            const seededRandom = (seed) => {
+                const x = Math.sin(seed) * 10000;
+                return x - Math.floor(x);
+            };
+
+            for (let i = 0; i < state.quantity; i++) {
+                const col = i % cols;
+                const row = Math.floor(i / cols);
+                const x = col * cellWidth + cellWidth / 2;
+                const y = row * cellHeight + cellHeight / 2;
+
+                let fillColor = state.primaryColor;
+                if (state.randomColor) {
+                    const t = seededRandom(i);
+                    fillColor = interpolateColor(state.primaryColor, state.secondaryColor, t);
+                } else {
+                    const t = i / Math.max(state.quantity - 1, 1);
+                    fillColor = interpolateColor(state.primaryColor, state.secondaryColor, t);
+                }
+
+                const angle = (state.rotation + (i * 360 / Math.max(state.quantity, 1)));
+
+                svg += `\n    <g transform="translate(${x}, ${y}) rotate(${angle})">`;
+
+                switch (state.shape) {
+                    case 'circle':
+                        svg += `<circle r="${size}" fill="${fillColor}" opacity="${state.opacity}"/>`;
+                        break;
+                    case 'square':
+                        svg += `<rect x="${-size}" y="${-size}" width="${size * 2}" height="${size * 2}" fill="${fillColor}" opacity="${state.opacity}"/>`;
+                        break;
+                    case 'triangle':
+                        svg += `<polygon points="0,-${size} ${size},${size} -${size},${size}" fill="${fillColor}" opacity="${state.opacity}"/>`;
+                        break;
+                }
+
+                svg += `</g>`;
+            }
+
+            svg += `\n  </g>\n</svg>`;
+
+            // 下載
+            const blob = new Blob([svg], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `texture-${Date.now()}.svg`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 重置
+        function resetTexture() {
+            state = {
+                shape: 'circle',
+                quantity: 12,
+                primaryColor: '#7c3aed',
+                secondaryColor: '#ff6b6b',
+                rotation: 0,
+                opacity: 1,
+                randomColor: false,
+                zoom: 1
+            };
+
+            document.getElementById('quantity').value = 12;
+            document.getElementById('rotation').value = 0;
+            document.getElementById('opacity').value = 100;
+            document.getElementById('primaryColor').value = '#7c3aed';
+            document.getElementById('secondaryColor').value = '#ff6b6b';
+            document.getElementById('randomColor').checked = false;
+
+            updateTexture();
+        }
+
+        // 初始化
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+    </script>
+</body>
+</html>
